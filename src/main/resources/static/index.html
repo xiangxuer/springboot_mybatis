@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>List</title>
+    <script src="jquery.min.js"></script>
+    <script src="vue.js"></script>
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="element.css">
+    <!-- 引入组件库 -->
+    <script src="element.js"></script>
+
+    <script>
+        $(function () {
+            var page = "/users";
+            // 从后台获取数据
+            getUsers(page);
+        })
+        function getUsers(page) {
+            // 使用ajax发起一个GET方法的请求
+            $.get(
+                page,
+                // result参数是后台传过来的user数组
+                function (result) {
+                    // 将返回结果绑定到UI上，这里用到了vue
+                    new Vue({
+                        el:'#div1',
+                        data:{
+                            users:result,
+                            dialogVisible: false,
+                            form: {}
+                        },
+                        methods: {
+                            loadTable() {
+                                var page = "/users";
+                                // 从后台获取数据
+                                getUsers(page);
+                            },
+                            add() {
+                                this.dialogVisible = true;
+                                this.form = {};
+                            },
+                            edit(row) {
+                                this.form = row;
+                                this.dialogVisible = true;
+                            },
+                            save() {
+                                let data = JSON.stringify(this.form);
+                                if (this.form.id) {
+                                    // 编辑
+                                    $.ajax({
+                                        url: '/users',
+                                        type: 'put',
+                                        contentType: 'application/json',
+                                        data: data
+                                    }).then(res => {
+                                        this.dialogVisible = false;
+                                        this.loadTable();
+                                    })
+                                } else {
+                                    // 新增
+                                    $.ajax({
+                                        url: '/users',
+                                        type: 'post',
+                                        contentType: 'application/json',
+                                        data: data
+                                    }).then(res => {
+                                        this.dialogVisible = false;
+                                        this.loadTable();
+                                    })
+                                }
+                            },
+                            del(id) {
+                                   $.ajax({
+                                    url: '/users/' + id,
+                                    type: 'delete',
+                                    contentType: 'application/json'
+                                }).then(res => {
+                                   this.loadTable();
+                                })
+                            }
+                        }
+                    })
+                }
+            )
+        }
+
+</script>
+</head>
+<body>
+<div id="div1" style="width: 80%; margin: 0 auto">
+    <h2>用户信息表</h2>
+    <el-row>
+        <el-col :span="6" style="margin-bottom: 10px">
+            <el-button type="primary" @click="add">新增</el-button>
+           </el-col>
+    </el-row>
+
+    <el-table
+            :data="users"
+            stripe
+            border
+            style="width: 100%">
+        <el-table-column
+                prop="username"
+                label="用户名"
+        >
+        </el-table-column>
+
+        <el-table-column
+                prop="sex"
+                label="性别">
+        </el-table-column>
+        <el-table-column
+                prop="address"
+                label="地址">
+        </el-table-column>
+        <el-table-column
+                fixed="right"
+                label="操作"
+                width="100">
+            <template slot-scope="scope">
+                <el-button type="primary" icon="el-icon-edit" size="small" circle @click="edit(scope.row)"></el-button>
+                <el-button type="danger" icon="el-icon-delete" size="small" circle @click="del(scope.row.id)"></el-button>
+            </template>
+        </el-table-column>
+    </el-table>
+
+    <el-dialog
+            title="用户信息"
+            :visible.sync="dialogVisible"
+            width="30%">
+        <el-form ref="form" :model="form" label-width="80px">
+            <el-form-item label="用户名">
+                <el-input v-model="form.username"></el-input>
+            </el-form-item>
+            <el-form-item label="生日">
+                <el-input v-model="form.birthday"></el-input>
+            </el-form-item>
+            <el-form-item label="性别">
+                <el-radio v-model="form.sex" label="男">男</el-radio>
+                <el-radio v-model="form.sex" label="女">女</el-radio>
+            </el-form-item>
+            <el-form-item label="地址">
+                <el-input v-model="form.address"></el-input>
+            </el-form-item>
+
+        </el-form>
+        <span slot="footer" class="dialog-footer">
+            <el-button @click="dialogVisible = false">取 消</el-button>
+            <el-button type="primary" @click="save">确 定</el-button>
+        </span>
+    </el-dialog>
+
+</div>
+
+</body>
+</html>
